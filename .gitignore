@@ -107,3 +107,9 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+# Executables & Dynamic Libraries (Linux Build)
+*.x86_64
+*.x86
+*_Data/
+*.so
+*_BurstDebugInformation_DoNotShip/

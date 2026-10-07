@@ -72,4 +72,28 @@ public class PlayerMovement : MonoBehaviour
 
         controller.Move(velocidadVertical * Time.deltaTime);
     }
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        // Verificar si el objeto con el que chocamos tiene un Rigidbody
+        Rigidbody body = hit.collider.attachedRigidbody;
+
+        // Si no tiene Rigidbody, o está marcado como IsKinematic, no hacemos nada
+        if (body == null || body.isKinematic)
+        {
+            return;
+        }
+
+        // Asegurarnos de que no estamos empujando algo que esté debajo de nosotros
+        if (hit.moveDirection.y < -0.3f)
+        {
+            return;
+        }
+
+        // Calcular la dirección del empuje (usando la dirección en la que camina el jugador)
+        Vector3 pushDir = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
+
+        // Aplicar la fuerza al Rigidbody de la puerta
+        // Puedes cambiar el "Velocidad" por un número fijo (ej. 5f) si quieres más fuerza
+        body.AddForceAtPosition(pushDir * Velocidad, hit.point, ForceMode.Impulse);
+    }
 }
