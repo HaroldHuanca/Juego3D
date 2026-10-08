@@ -1,0 +1,8 @@
+Generated with the built-in image_gen tool.
+
+Final prompt:
+Use case: stylized-concept. Asset type: widescreen 16:9 background for the main menu of Closing Time, a horror game set in a small minimarket. Primary request: an unsettling small convenience store interior late at night at closing time, believable cinematic realistic game environment. View from the checkout area toward narrow grocery aisles and glass door refrigerators, stocked shelves with anonymous packaged snacks and drinks, tiled floor, a cash register silhouette, distant dark storefront windows. No people. Cold sickly fluorescent ceiling lights, one dim warm pool of light in the back, faint dust in the air, oppressive silence and deep shadows, subtle wear rather than ruined building. Composition: strongly recognizable minimarket shelves and refrigerated drinks occupy the center and right half; keep the left third dark, low contrast, uncluttered for the menu title and buttons added separately by Unity. Landscape image, cinematic environmental detail, restrained desaturated green-gray and charcoal palette, realistic lighting and materials. Constraints: no text, no title, no UI, no legible product labels, no logos, no watermark, no monsters, no gore.
+
+Font: Creepster by Font Diner, distributed under SIL Open Font License 1.1.
+Font source: https://github.com/google/fonts/tree/main/ofl/creepster
+Font license: Creepster-OFL.txt
