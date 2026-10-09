@@ -6,16 +6,42 @@ using UnityEngine.InputSystem;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movimiento")]
-    public float Velocidad = 5f;
+    public float Velocidad = 2.2f;
+    [Min(0.1f)] public float Aceleracion = 5f;
+    [Min(0.1f)] public float Desaceleracion = 8f;
+    [Range(0.1f, 1f)] public float FactorRetroceso = 0.7f;
+    [Range(0.1f, 1f)] public float FactorLateral = 0.8f;
+    [Min(0f)] public float FuerzaEmpuje = 5f;
+    [Header("Esprint (mantener Shift al avanzar)")]
+    public bool EsprintActivado = true;
+    [Min(0.1f)] public float VelocidadEsprint = 4.2f;
+    [Min(0.1f)] public float AceleracionEsprint = 7f;
     public float Gravedad = -9.81f;
     public float FuerzaSalto = 1.5f;
 
     private CharacterController controller;
     private Vector3 velocidadVertical;
+    private BrazosPrimeraPersona brazos;
+    private Vector3 velocidadHorizontal;
+
+    public float VelocidadHorizontalActual { get; private set; }
+    public float DistanciaCaminada { get; private set; }
+    public bool EnSuelo => controller != null && controller.isGrounded;
+    public bool Esprintando { get; private set; }
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
+        // El CharacterController ya resuelve la gravedad y los contactos. Un
+        // Rigidbody dinámico con otra cápsula corregía la posición en FixedUpdate.
+        if (TryGetComponent<Rigidbody>(out var cuerpo))
+        {
+            cuerpo.useGravity = false;
+            cuerpo.isKinematic = true;
+        }
+        if (TryGetComponent<CapsuleCollider>(out var capsulaExtra)) capsulaExtra.enabled = false;
+        var interaccion = GetComponentInChildren<InteraccionJugador>();
+        brazos = interaccion != null ? interaccion.brazos : GetComponentInChildren<BrazosPrimeraPersona>();
     }
 
     void Update()
@@ -55,7 +81,17 @@ public class PlayerMovement : MonoBehaviour
         // Evitar que el movimiento diagonal sea más rápido
         movimiento = Vector3.ClampMagnitude(movimiento, 1f);
 
-        controller.Move(movimiento * Velocidad * Time.deltaTime);
+        float factor = vertical < 0f ? FactorRetroceso : 1f;
+        if (vertical == 0f && horizontal != 0f) factor = FactorLateral;
+        bool shift = Keyboard.current != null &&
+            (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
+        Esprintando = EsprintActivado && shift && vertical > 0f;
+        float rapidez = Esprintando ? Mathf.Max(Velocidad, VelocidadEsprint) : Velocidad;
+        Vector3 objetivo = movimiento * rapidez * factor;
+        bool frenando = objetivo.sqrMagnitude < velocidadHorizontal.sqrMagnitude;
+        float cambio = movimiento.sqrMagnitude == 0f || frenando ? Desaceleracion :
+            Esprintando ? AceleracionEsprint : Aceleracion;
+        velocidadHorizontal = Vector3.MoveTowards(velocidadHorizontal, objetivo, cambio * Time.deltaTime);
 
         // Salto
         if (Keyboard.current != null &&
@@ -70,7 +106,19 @@ public class PlayerMovement : MonoBehaviour
         // Gravedad
         velocidadVertical.y += Gravedad * Time.deltaTime;
 
-        controller.Move(velocidadVertical * Time.deltaTime);
+        Vector3 antes = transform.position;
+        controller.Move((velocidadHorizontal + velocidadVertical) * Time.deltaTime);
+        Vector3 desplazamiento = transform.position - antes;
+        desplazamiento.y = 0f;
+        VelocidadHorizontalActual = Time.deltaTime > 0f ? desplazamiento.magnitude / Time.deltaTime : 0f;
+        if (enSuelo && controller.isGrounded) DistanciaCaminada += desplazamiento.magnitude;
+    }
+
+    private void OnDisable()
+    {
+        velocidadHorizontal = Vector3.zero;
+        VelocidadHorizontalActual = 0f;
+        Esprintando = false;
     }
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
@@ -84,16 +132,17 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // Asegurarnos de que no estamos empujando algo que esté debajo de nosotros
-        if (hit.moveDirection.y < -0.3f)
+        if (hit.normal.y > 0.5f || velocidadHorizontal.sqrMagnitude < 0.01f)
         {
             return;
         }
 
         // Calcular la dirección del empuje (usando la dirección en la que camina el jugador)
-        Vector3 pushDir = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
+        Vector3 pushDir = velocidadHorizontal.normalized;
 
-        // Aplicar la fuerza al Rigidbody de la puerta
-        // Puedes cambiar el "Velocidad" por un número fijo (ej. 5f) si quieres más fuerza
-        body.AddForceAtPosition(pushDir * Velocidad, hit.point, ForceMode.Impulse);
+        // La fuerza de las puertas no depende de la velocidad de caminata.
+        body.AddForceAtPosition(pushDir * FuerzaEmpuje, hit.point, ForceMode.Impulse);
+        if (brazos != null && body.GetComponent<HingeJoint>() != null)
+            brazos.Empujar();
     }
 }
