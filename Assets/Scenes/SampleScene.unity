@@ -880,7 +880,7 @@ Terrain:
   m_StaticShadowCaster: 0
   m_IgnoreQualitySettings: 0
   m_ReflectionProbeUsage: 1
-  m_MaterialTemplate: {fileID: 2100000, guid: 815eccd412c22ca1c8af3a0d5bbdac1d, type: 2}
+  m_MaterialTemplate: {fileID: 628422317698496189, guid: e17aada14f1fae9419bb140c6553b6bf, type: 3}
   m_BakeLightProbesForTrees: 1
   m_PreserveTreePrototypeLayers: 0
   m_DeringLightProbesForTrees: 1
@@ -4276,7 +4276,7 @@ Camera:
   m_GameObject: {fileID: 732583126}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
+  m_ClearFlags: 4
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
