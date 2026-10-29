@@ -7,21 +7,20 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Movimiento")]
     public float Velocidad = 2.2f;
-    [Min(0.1f)] public float Aceleracion = 5f;
-    [Min(0.1f)] public float Desaceleracion = 8f;
+    [Min(0.1f)] public float Aceleracion = 14f;
+    [Min(0.1f)] public float Desaceleracion = 20f;
     [Range(0.1f, 1f)] public float FactorRetroceso = 0.7f;
     [Range(0.1f, 1f)] public float FactorLateral = 0.8f;
     [Min(0f)] public float FuerzaEmpuje = 5f;
     [Header("Esprint (mantener Shift al avanzar)")]
     public bool EsprintActivado = true;
     [Min(0.1f)] public float VelocidadEsprint = 4.2f;
-    [Min(0.1f)] public float AceleracionEsprint = 7f;
-    public float Gravedad = -9.81f;
-    public float FuerzaSalto = 1.5f;
+    [Min(0.1f)] public float AceleracionEsprint = 18f;
+    public float Gravedad = -22f;
+    public float FuerzaSalto = 0.6f;
 
     private CharacterController controller;
     private Vector3 velocidadVertical;
-    private BrazosPrimeraPersona brazos;
     private Vector3 velocidadHorizontal;
 
     public float VelocidadHorizontalActual { get; private set; }
@@ -40,8 +39,6 @@ public class PlayerMovement : MonoBehaviour
             cuerpo.isKinematic = true;
         }
         if (TryGetComponent<CapsuleCollider>(out var capsulaExtra)) capsulaExtra.enabled = false;
-        var interaccion = GetComponentInChildren<InteraccionJugador>();
-        brazos = interaccion != null ? interaccion.brazos : GetComponentInChildren<BrazosPrimeraPersona>();
     }
 
     void Update()
@@ -131,6 +128,10 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
+        // Las puertas se accionan únicamente con E; caminar contra ellas no
+        // aplica fuerzas ni reproduce la animación de empujar.
+        if (body.GetComponent<HingeJoint>() != null) return;
+
         // Asegurarnos de que no estamos empujando algo que esté debajo de nosotros
         if (hit.normal.y > 0.5f || velocidadHorizontal.sqrMagnitude < 0.01f)
         {
@@ -140,9 +141,7 @@ public class PlayerMovement : MonoBehaviour
         // Calcular la dirección del empuje (usando la dirección en la que camina el jugador)
         Vector3 pushDir = velocidadHorizontal.normalized;
 
-        // La fuerza de las puertas no depende de la velocidad de caminata.
+        // El resto de objetos físicos conserva el empuje por contacto.
         body.AddForceAtPosition(pushDir * FuerzaEmpuje, hit.point, ForceMode.Impulse);
-        if (brazos != null && body.GetComponent<HingeJoint>() != null)
-            brazos.Empujar();
     }
 }

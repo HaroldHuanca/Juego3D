@@ -113,15 +113,17 @@ public static class BrazosValidation
                 puerta = go.AddComponent<Rigidbody>(); puerta.useGravity = false;
                 var hinge = go.AddComponent<HingeJoint>();
                 hinge.axis = Vector3.up; hinge.anchor = new Vector3(-0.5f, 0, 0);
+                go.AddComponent<CierrePuerta>();
                 Physics.SyncTransforms();
-                Check(interaction.IntentarInteractuar(), "E empuja puerta y reproduce clip");
+                Check(interaction.IntentarInteractuar(), "E abre puerta y reproduce clip");
                 Check(interaction.brazos.Ocupado, "Empuje ocupa los brazos");
                 siguiente = EditorApplication.timeSinceStartup + 0.15;
                 SessionState.SetInt(Key, 5);
             }
             else if (stage == 5 && EditorApplication.isPlaying)
             {
-                Check(puerta.angularVelocity.sqrMagnitude > 0.0001f, "Puerta responde físicamente al empuje");
+                Check(Mathf.Abs(puerta.GetComponent<CierrePuerta>().AnguloActual) > 0.1f,
+                    "Puerta avanza hacia la apertura completa");
                 Debug.Log("BRAZOS_VALIDATION_OK");
                 SessionState.SetInt(Key, 6);
                 EditorApplication.ExitPlaymode();

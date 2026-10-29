@@ -35,6 +35,8 @@ public class Camara : MonoBehaviour
     public float FasePasos { get; private set; }
     public float IntensidadPasos { get; private set; }
     public float MezclaEsprint { get; private set; }
+    // Dos apoyos por ciclo completo, compartidos por cámara, brazos y audio.
+    public event System.Action PasoRealizado;
 
     void Start()
     {
@@ -95,7 +97,11 @@ public class Camara : MonoBehaviour
             distanciaAnterior = movimiento.DistanciaCaminada;
             float longitud = Mathf.Lerp(LongitudCicloPasos, LongitudCicloEsprint, MezclaEsprint);
             // Acumular la fase evita saltos al cambiar entre caminar y correr.
-            FasePasos = Mathf.Repeat(FasePasos + recorrido / Mathf.Max(0.1f, longitud) * Mathf.PI * 2f, Mathf.PI * 2f);
+            float faseNueva = FasePasos + recorrido / Mathf.Max(0.1f, longitud) * Mathf.PI * 2f;
+            int apoyos = Mathf.FloorToInt(faseNueva / Mathf.PI) - Mathf.FloorToInt(FasePasos / Mathf.PI);
+            FasePasos = Mathf.Repeat(faseNueva, Mathf.PI * 2f);
+            if (movimiento.isActiveAndEnabled && movimiento.EnSuelo && Time.deltaTime > 0f)
+                for (int i = 0; i < apoyos; i++) PasoRealizado?.Invoke();
         }
         float intensidad = IntensidadPasos;
         float fase = FasePasos;
