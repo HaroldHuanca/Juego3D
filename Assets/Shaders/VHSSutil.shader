@@ -29,12 +29,27 @@ Shader "JuegoTerror/VHS Sutil"
                 float tiempo = _VHSParams.y;
                 float2 pixel = _VHSParams.zw;
                 float borde = lerp(0.2, 1.0, smoothstep(0.05, 0.7, length(uv - 0.5)));
+                // Una interferencia corta por ventana de 8 s, con inicio variable.
+                // El fundido evita cortes; la banda no cruza la zona central de visión.
+                float ventana = floor(tiempo / 8.0);
+                float semilla = Ruido(float2(ventana, 13.0));
+                float inicio = 1.0 + 3.0 * semilla;
+                float duracion = lerp(0.18, 0.32, Ruido(float2(ventana, 41.0)));
+                float fase = saturate((tiempo - ventana * 8.0 - inicio) / duracion);
+                float pulso = sin(fase * 3.14159265);
+                pulso *= pulso;
+                float posicion = lerp(0.12, 0.27, Ruido(float2(ventana, 71.0)));
+                posicion = semilla < 0.5 ? posicion : 1.0 - posicion;
+                posicion += (fase - 0.5) * 0.04;
+                float banda = 1.0 - smoothstep(0.008, 0.03, abs(uv.y - posicion));
+                float interferencia = banda * pulso * fuerza;
                 // Desplazamiento subpíxel suave: no hay golpes ni sacudidas.
                 float deriva = sin(uv.y * 21.0 + tiempo * 0.65) *
                     sin(tiempo * 0.43) * 0.6 * fuerza * borde;
-                uv.x += deriva * pixel.x;
+                float tracking = sin(uv.y * 150.0 + tiempo * 18.0) * 2.5 * interferencia;
+                uv.x += (deriva + tracking) * pixel.x;
                 half4 base = SAMPLE_TEXTURE2D_X_LOD(_BlitTexture, sampler_LinearClamp, uv, 0);
-                float separacion = 0.65 * fuerza * borde * pixel.x;
+                float separacion = (0.65 * fuerza * borde + interferencia) * pixel.x;
                 half3 color = base.rgb;
                 color.r = SAMPLE_TEXTURE2D_X_LOD(_BlitTexture, sampler_LinearClamp, uv + float2(separacion, 0), 0).r;
                 color.b = SAMPLE_TEXTURE2D_X_LOD(_BlitTexture, sampler_LinearClamp, uv - float2(separacion, 0), 0).b;
@@ -42,9 +57,10 @@ Shader "JuegoTerror/VHS Sutil"
                 color = lerp(color, luminancia.xxx, 0.08 * fuerza);
                 float grano = Ruido(floor(uv / pixel) + floor(tiempo * 24.0) * float2(17.0, 31.0)) - 0.5;
                 float sombras = lerp(0.2, 1.0, smoothstep(0.01, 0.25, luminancia));
-                color += grano * 0.018 * fuerza * sombras;
+                color += grano * (0.04 * fuerza + 0.12 * interferencia) * sombras;
                 float lineas = sin(uv.y / pixel.y * 3.14159265);
-                color *= 1.0 - (0.5 + 0.5 * lineas) * 0.008 * fuerza;
+                color *= 1.0 - (0.5 + 0.5 * lineas) * 0.018 * fuerza;
+                color *= 1.0 - 0.035 * interferencia;
                 return half4(max(color, 0.0), base.a);
             }
             ENDHLSL

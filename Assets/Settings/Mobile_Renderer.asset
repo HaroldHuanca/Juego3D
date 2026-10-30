@@ -27,8 +27,10 @@ MonoBehaviour:
     probeSamplingDebugTexture: {fileID: 0}
     probeVolumeBlendStatesCS: {fileID: 0}
   m_RendererFeatures:
+  - {fileID: 900200102}
+  - {fileID: 900200101}
   - {fileID: 900200100}
-  m_RendererFeatureMap: a4f6a73500000000
+  m_RendererFeatureMap: a6f6a73500000000a5f6a73500000000a4f6a73500000000
   m_UseNativeRenderPass: 1
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   m_AssetVersion: 2
@@ -46,7 +48,7 @@ MonoBehaviour:
     failOperation: 0
     zFailOperation: 0
   m_ShadowTransparentReceive: 0
-  m_RenderingMode: 0
+  m_RenderingMode: 2
   m_DepthPrimingMode: 0
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
@@ -63,5 +65,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92837f38ec8a45028e525e611aae72c5, type: 3}
   m_Name: VHS Sutil
   m_EditorClassIdentifier: Assembly-CSharp::VHSRendererFeature
-  m_Active: 1
+  m_Active: 0
   shader: {fileID: 4800000, guid: befa1d04b3374d269f72e2eb2a68394c, type: 3}
+--- !u!114 &900200101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00753771071f41ca99506c714b997483, type: 3}
+  m_Name: VNTG VHS del jugador
+  m_EditorClassIdentifier:
+  m_Active: 1
+  _shader: {fileID: 4800000, guid: 98848e0860c34c0e9edade7333c920d4, type: 3}
+  _injectionPoint: 600
+--- !u!114 &900200102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d69a19d29ef66464ea0afc7cd84fd6c2, type: 3}
+  m_Name: Bruma volumetrica
+  m_EditorClassIdentifier:
+  m_Active: 1
+  downsampleDepthShader: {fileID: 4800000, guid: cffeaeec0396a2c4dad475266cc8dfeb, type: 3}
+  volumetricFogShader: {fileID: 4800000, guid: 08f816187f9af0244a95556ee0cab83f, type: 3}

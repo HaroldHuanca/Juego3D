@@ -8,8 +8,8 @@ public class VHSCamara : MonoBehaviour
 {
     public AmbienteSonoro ambiente;
     public Camera camaraBrazos;
-    [Range(0f, 1f)] public float intensidadExterior = 0.12f;
-    [Range(0f, 1f)] public float intensidadInterior = 0.3f;
+    [Range(0f, 1f)] public float intensidadExterior = 0.3f;
+    [Range(0f, 1f)] public float intensidadInterior = 0.6f;
     private Camera camara;
     internal static readonly List<VHSCamara> Activas = new List<VHSCamara>();
     public float Intensidad => Mathf.Lerp(intensidadExterior, intensidadInterior,

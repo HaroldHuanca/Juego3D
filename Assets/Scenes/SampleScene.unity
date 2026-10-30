@@ -20,11 +20,11 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
-  m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
+  m_AmbientSkyColor: {r: 0.14, g: 0.18, b: 0.23, a: 1}
+  m_AmbientEquatorColor: {r: 0.085, g: 0.11, b: 0.135, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
-  m_AmbientIntensity: 3.68
-  m_AmbientMode: 0
+  m_AmbientIntensity: 1
+  m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 2100000, guid: acea2e49cd714b358a23d83c3b13b849, type: 2}
   m_HaloStrength: 0.5
@@ -10846,6 +10846,7 @@ GameObject:
   - component: {fileID: 1777399074}
   - component: {fileID: 1777399075}
   - component: {fileID: 1777399076}
+  - component: {fileID: 1777399077}
   m_Layer: 9
   m_Name: Camara
   m_TagString: MainCamera
@@ -14987,8 +14988,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VHSCamara
   ambiente: {fileID: 900001002}
   camaraBrazos: {fileID: 732583129}
-  intensidadExterior: 0.12
-  intensidadInterior: 0.3
+  intensidadExterior: 0.3
+  intensidadInterior: 0.6
+--- !u!114 &1777399077
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1777399068}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a49d515fca11684996201940ce918ed, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EstiloAnalogico
+  granoExterior: 0.065
+  granoInterior: 0.095
+  nieblaExterior: 0.035
+  nieblaInterior: 0.008
+  intensidadLinterna: 12
+  pasosNiebla: 32
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

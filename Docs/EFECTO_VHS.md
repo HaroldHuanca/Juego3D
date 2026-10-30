@@ -1,19 +1,18 @@
-# VHS sutil en primera persona
+# VHS de la cámara del jugador
 
-La cámara `Camara` de `SampleScene` tiene `VHSCamara`. Su intensidad exterior es
-0.12 y la interior 0.30. Utiliza directamente `AmbienteSonoro.MezclaInterior`,
-por lo que acompaña el mismo fundido del VHS sonoro al entrar y salir de los edificios.
-No analiza los picos del audio ni genera destellos al producirse un glitch sonoro.
+La implementación activa utiliza el módulo CRT de **VNTG**, junto con bruma de
+**URP Volumetric Light**, configurados por `EstiloAnalogico` en la cámara de
+`SampleScene`. Ver [recursos, licencias y ajustes](RECURSOS_VISUALES.md).
 
-El shader añade grano fino, una separación de color inferior a un píxel,
-deriva horizontal suave y líneas de intensidad muy baja. Atenúa la distorsión
-cerca del centro y el grano en sombras; conserva resolución, exposición y encuadre.
+La intensidad ambiental sigue `AmbienteSonoro.MezclaInterior`: grano más marcado
+dentro de los edificios, bruma más ligera y luz frontal atenuada. Se mantienen
+interferencias breves, separadas por varios segundos, fuera del centro de visión.
 
-`VHSRendererFeature` está configurado en los renderers PC y Mobile. Solo se aplica
-a las cámaras registradas por `VHSCamara`, una vez al final de la composición del
-escenario y los brazos. El menú, Scene View y cámaras ajenas quedan sin este filtro.
-Funciona con Render Graph de URP 17.5, sin activar el resto del postprocesado.
+No se dibujan marcos de cámara, REC ni fechas. No hay pixelación, reducción de
+resolución, interlazado ni persistencia de fotogramas. VNTG se aplica una vez sobre
+el escenario y los brazos; la niebla solo afecta al escenario.
 
-Para ajustarlo: selecciona `Camara > VHSCamara` y modifica `Intensidad Interior`
-o `Intensidad Exterior`. Desactivar el componente elimina el efecto por completo.
-El shader es propio del proyecto (`Assets/Shaders/VHSSutil.shader`).
+`VHSCamara` mantiene las referencias al ambiente y la cámara de brazos. Desactivarlo
+elimina VNTG; desactivar `EstiloAnalogico` elimina también la luz frontal, el perfil
+de postprocesado y la bruma del jugador. El renderer/shader VHS anterior permanece
+guardado pero desactivado, para evitar acumular dos filtros.
