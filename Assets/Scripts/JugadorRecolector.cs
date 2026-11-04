@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -12,18 +11,23 @@ public class JugadorRecolector : MonoBehaviour
     [Header("Sujeción")]
     [SerializeField] private Transform puntoSujecion;
 
+    [Header("Indicador Visual")]
+    [SerializeField] private bool mostrarIndicador = true;
+
     private CajaInteractuable cajaDetectada;
     private CajaInteractuable cajaSostenida;
+    private GUIStyle estiloGUI;
 
     private void Update()
     {
         if (camara == null)
             return;
 
+        // Si ya tenemos una caja cargada: se suelta con la tecla [G]
         if (cajaSostenida != null)
         {
             if (Keyboard.current != null &&
-                Keyboard.current.eKey.wasPressedThisFrame)
+                Keyboard.current.gKey.wasPressedThisFrame)
             {
                 SoltarCaja();
             }
@@ -31,10 +35,12 @@ public class JugadorRecolector : MonoBehaviour
             return;
         }
 
+        // Detectar si estamos apuntando a una caja
         DetectarCaja();
 
-        if (Keyboard.current != null &&
-            Keyboard.current.eKey.wasPressedThisFrame &&
+        // Si estamos apuntando a una caja: se recoge con CLICK DERECHO
+        if (Mouse.current != null &&
+            Mouse.current.rightButton.wasPressedThisFrame &&
             cajaDetectada != null)
         {
             RecogerCaja();
@@ -56,20 +62,39 @@ public class JugadorRecolector : MonoBehaviour
             QueryTriggerInteraction.Ignore
         );
 
-        if (!impactoDetectado)
+        CajaInteractuable nuevaCaja = null;
+
+        if (impactoDetectado)
         {
-            cajaDetectada = null;
-            return;
+            nuevaCaja = impacto.collider.GetComponentInParent<CajaInteractuable>();
         }
 
-        cajaDetectada =
-            impacto.collider.GetComponentInParent<CajaInteractuable>();
+        // Si la caja apuntada cambió
+        if (nuevaCaja != cajaDetectada)
+        {
+            // Apagar brillo en la caja que dejamos de mirar
+            if (cajaDetectada != null)
+            {
+                cajaDetectada.SetResaltado(false);
+            }
+
+            cajaDetectada = nuevaCaja;
+
+            // Encender brillo en la nueva caja que estamos mirando
+            if (cajaDetectada != null)
+            {
+                cajaDetectada.SetResaltado(true);
+            }
+        }
     }
 
     private void RecogerCaja()
     {
         if (cajaDetectada == null || puntoSujecion == null)
             return;
+
+        // Apagar el brillo de interacción antes de cargarla
+        cajaDetectada.SetResaltado(false);
 
         cajaSostenida = cajaDetectada;
         cajaDetectada = null;
@@ -115,16 +140,6 @@ public class JugadorRecolector : MonoBehaviour
         }
 
         Debug.Log($"[Caja] Escala mundial final: {cajaTransform.lossyScale}");
-        // Escalas después de cambiar la jerarquía.
-        Debug.Log(
-            $"[Caja] Escala local DESPUÉS: " +
-            $"{cajaSostenida.transform.localScale}"
-        );
-
-        Debug.Log(
-            $"[Caja] Escala mundial DESPUÉS: " +
-            $"{cajaSostenida.transform.lossyScale}"
-        );
 
         foreach (Collider col in
                  cajaSostenida.GetComponentsInChildren<Collider>())
@@ -156,5 +171,46 @@ public class JugadorRecolector : MonoBehaviour
         }
 
         cajaSostenida = null;
+    }
+
+    private void OnDisable()
+    {
+        if (cajaDetectada != null)
+        {
+            cajaDetectada.SetResaltado(false);
+            cajaDetectada = null;
+        }
+    }
+
+    private void OnGUI()
+    {
+        if (!mostrarIndicador || Cursor.lockState != CursorLockMode.Locked) return;
+
+        string textoPrompt = "";
+
+        if (cajaSostenida != null)
+        {
+            textoPrompt = "G · Soltar Caja";
+        }
+        else if (cajaDetectada != null)
+        {
+            textoPrompt = "Click Derecho · Recoger Caja";
+        }
+
+        if (!string.IsNullOrEmpty(textoPrompt))
+        {
+            if (estiloGUI == null)
+            {
+                estiloGUI = new GUIStyle(GUI.skin.label)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = 16,
+                    fontStyle = FontStyle.Bold,
+                    normal = { textColor = new Color(1f, 0.90f, 0.4f) }
+                };
+            }
+
+            GUI.Label(new Rect(Screen.width / 2f - 180, Screen.height / 2f + 25, 360, 30), textoPrompt, estiloGUI);
+        }
     }
 }
