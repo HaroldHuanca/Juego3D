@@ -25,6 +25,8 @@ public static class CaminataValidation
     private static float mayorCambioPosicion;
     private static Vector3 posicionAnterior;
     private static int frameAnterior;
+    private static float alturaInicialSalto, alturaMaximaSalto, inicioSalto, tiempoAire;
+    private static bool saltoEnAire;
 
     static CaminataValidation() { EditorApplication.update += Tick; }
 
@@ -74,6 +76,12 @@ public static class CaminataValidation
         int stage = SessionState.GetInt(Key, 0);
         if (stage == 0) return;
         if (EditorApplication.isPlaying) EditorApplication.QueuePlayerLoopUpdate();
+        if ((stage == 30 || stage == 31) && player != null)
+        {
+            alturaMaximaSalto = Mathf.Max(alturaMaximaSalto, player.transform.position.y - alturaInicialSalto);
+            if (!player.EnSuelo) saltoEnAire = true;
+            else if (saltoEnAire && tiempoAire == 0f) tiempoAire = Time.time - inicioSalto;
+        }
         if ((stage == 4 || stage >= 20 && stage <= 24) && camara != null)
         {
             maximoBalanceo = Mathf.Max(maximoBalanceo, Vector3.Distance(camara.transform.localPosition, reposo));
@@ -128,8 +136,8 @@ public static class CaminataValidation
             }
             else if (stage == 3 && EditorApplication.isPlaying)
             {
-                Check(player.VelocidadHorizontalActual > 0.1f && player.VelocidadHorizontalActual < 1.8f,
-                    "Acelera progresivamente al comenzar");
+                Check(player.VelocidadHorizontalActual > 1.8f && player.VelocidadHorizontalActual <= 2.3f,
+                    "Responde al caminar en aproximadamente 0.16 segundos");
                 Siguiente(4, 0.8);
             }
             else if (stage == 4 && EditorApplication.isPlaying)
@@ -169,8 +177,8 @@ public static class CaminataValidation
             }
             else if (stage == 22 && EditorApplication.isPlaying)
             {
-                Check(!player.Esprintando && player.VelocidadHorizontalActual > 2.2f && player.VelocidadHorizontalActual < 4.1f,
-                    "Soltar Shift frena gradualmente hasta caminar");
+                Check(!player.Esprintando && Mathf.Abs(player.VelocidadHorizontalActual - 2.2f) < 0.12f,
+                    "Soltar Shift recupera la caminata en menos de 0.15 segundos");
                 Siguiente(23, 0.7);
             }
             else if (stage == 23 && EditorApplication.isPlaying)
@@ -194,6 +202,25 @@ public static class CaminataValidation
                 Check(player.VelocidadHorizontalActual < 0.02f, "Se detiene al soltar la tecla");
                 Check(Vector3.Distance(camara.transform.localPosition, reposo) < 0.001f, "Cámara vuelve a reposo sin deriva");
                 Check(Quaternion.Angle(Quaternion.identity, camara.transform.localRotation) < 0.01f, "Inclinación vuelve a reposo");
+                alturaInicialSalto = player.transform.position.y;
+                alturaMaximaSalto = tiempoAire = 0f;
+                saltoEnAire = false;
+                inicioSalto = Time.time;
+                Entrada(UnityEngine.InputSystem.Key.Space);
+                Siguiente(30, 0.1);
+            }
+            else if (stage == 30 && EditorApplication.isPlaying)
+            {
+                Check(!player.EnSuelo, "Salto despega correctamente");
+                Entrada();
+                Siguiente(31, 0.55);
+            }
+            else if (stage == 31 && EditorApplication.isPlaying)
+            {
+                Check(player.EnSuelo && alturaMaximaSalto > 0.45f && alturaMaximaSalto < 0.65f,
+                    $"Salto corto: altura medida {alturaMaximaSalto:F2} m");
+                Check(tiempoAire > 0.35f && tiempoAire < 0.6f,
+                    $"Caída firme: tiempo en el aire {tiempoAire:F2} s");
                 Entrada(UnityEngine.InputSystem.Key.S, UnityEngine.InputSystem.Key.LeftShift);
                 Siguiente(6, 0.7);
             }
@@ -236,7 +263,7 @@ public static class CaminataValidation
             }
             else if (stage == 10 && EditorApplication.isPlaying)
             {
-                Check(puerta.angularVelocity.sqrMagnitude > 0.0001f, "Caminata lenta conserva el empuje físico de puertas");
+                Check(puerta.angularVelocity.sqrMagnitude < 0.0001f, "Caminar contra una puerta no la abre");
                 Entrada();
                 InputSystem.RemoveDevice(teclado);
                 Time.captureDeltaTime = 0f;

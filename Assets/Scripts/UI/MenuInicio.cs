@@ -135,7 +135,13 @@ public sealed class MenuInicio : MonoBehaviour
         Etiqueta("Desarrolladores", creditos.transform, "DESARROLLADORES", 19, new Vector2(0, -290), new Vector2(650, 35), acento);
         string[] nombres = { "Angelo Ccama Condori", "Harold Huanca Ccasa", "Jose Leonardo Cruz Gonzales", "Jorge Salvador Rodrigo Chipa" };
         for (int i = 0; i < nombres.Length; i++)
-            Etiqueta("Desarrollador " + (i + 1), creditos.transform, nombres[i], 29, new Vector2(0, -358 - i * 65), new Vector2(670, 45), marfil);
+            Etiqueta("Desarrollador " + (i + 1), creditos.transform, nombres[i], 29, new Vector2(0, -350 - i * 52), new Vector2(670, 45), marfil);
+        Etiqueta("Créditos audio", creditos.transform,
+            "VHS VCR Static Noise and Glitches — SkyernAklea\n" +
+            "freesound.org/s/508187/ · CC BY 4.0 · Recorte, nivelado y bucle\n" +
+            "creativecommons.org/licenses/by/4.0/\n" +
+            "Grillos: AlbertCoetser · freesound.org/s/492139/ · CC0",
+            15, new Vector2(0, -565), new Vector2(670, 100), marfil);
         regresar = CrearBoton(creditos.transform, "Regresar", "REGRESAR AL INICIO", -680f, MostrarInicio);
         creditos.SetActive(false);
 

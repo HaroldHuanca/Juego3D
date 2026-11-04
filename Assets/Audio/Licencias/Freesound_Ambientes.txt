@@ -1,0 +1,15 @@
+VHS VCR Static Noise and Glitches — SkyernAklea
+https://freesound.org/people/SkyernAklea/sounds/508187/
+Creative Commons Attribution 4.0 (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+Adaptación: recorte de extremos, ganancia, conversión a PCM 16 bits y unión con crossfade de 4 segundos.
+
+190135_Non Human Made Ambience_Crickets Night — AlbertCoetser
+https://freesound.org/people/AlbertCoetser/sounds/492139/
+Creative Commons Zero 1.0 (CC0)
+https://creativecommons.org/publicdomain/zero/1.0/
+Adaptación: recorte de extremos, ganancia y unión con crossfade de 4 segundos.
+
+Originales aportados por el usuario; conservados en su carpeta Descargas.
+Preparación reproducible: Tools/preparar_ambientes.py
+Licencias consultadas el 28 de octubre de 2026.
