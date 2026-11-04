@@ -9,9 +9,10 @@ public class InteraccionJugador : MonoBehaviour
     public Transform jugador;
     public LayerMask capasInteractuables = ~0;
     [Min(0.1f)] public float distancia = 1.8f;
+    [Min(0f)] public float fuerzaPuerta = 3f;
     public bool mostrarIndicador = true;
     private ObjetoRecogible objeto;
-    private CierrePuerta puerta;
+    private Rigidbody puerta;
     private RaycastHit contacto;
     private Coroutine recogidaPendiente;
     private GUIStyle estilo;
@@ -33,21 +34,21 @@ public class InteraccionJugador : MonoBehaviour
         if (jugador != null && contacto.transform.IsChildOf(jugador)) return;
         objeto = contacto.collider.GetComponentInParent<ObjetoRecogible>();
         Rigidbody body = contacto.rigidbody;
-        if (body != null) puerta = body.GetComponent<CierrePuerta>();
+        if (body != null && !body.isKinematic && body.GetComponent<HingeJoint>() != null) puerta = body;
     }
 
     public bool IntentarInteractuar()
     {
         BuscarObjetivo();
-        if ((brazos != null && brazos.Ocupado) || recogidaPendiente != null) return false;
+        if (brazos == null || brazos.Ocupado || recogidaPendiente != null) return false;
         if (objeto != null && objeto.isActiveAndEnabled && !objeto.Recogido)
         {
-            if (brazos == null || !brazos.Recoger()) return false;
+            if (!brazos.Recoger()) return false;
             recogidaPendiente = StartCoroutine(RecogerAlContacto(objeto));
             return true;
         }
-        if (puerta == null || !puerta.Abrir(transform.position, contacto.point)) return false;
-        if (brazos != null) brazos.Empujar();
+        if (puerta == null || !brazos.Empujar()) return false;
+        puerta.AddForceAtPosition(transform.forward * fuerzaPuerta, contacto.point, ForceMode.Impulse);
         return true;
     }
 
@@ -74,9 +75,8 @@ public class InteraccionJugador : MonoBehaviour
         if (estilo == null) estilo = new GUIStyle(GUI.skin.label)
         { alignment = TextAnchor.MiddleCenter, fontSize = 16 };
         GUI.Label(new Rect(Screen.width / 2f - 8, Screen.height / 2f - 8, 16, 16), "·", estilo);
-        if (brazos != null && brazos.Ocupado) return;
-        string texto = objeto != null ? "E · Recoger " + objeto.nombreObjeto :
-            puerta != null && puerta.PuedeAbrir ? "E · Abrir puerta" : "";
+        if (brazos == null || brazos.Ocupado) return;
+        string texto = objeto != null ? "E · Recoger " + objeto.nombreObjeto : puerta != null ? "E · Empujar" : "";
         GUI.Label(new Rect(Screen.width / 2f - 180, Screen.height / 2f + 25, 360, 30), texto, estilo);
     }
 }
