@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 7ee989d35ff09ff66a4a6304c418ac5a
+guid: 40dace52945d0e0b899e10f0a85ea3e9
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
@@ -32,9 +32,9 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: rig.001|rig.001Action
-      takeName: rig.001|rig.001Action
-      internalID: -6851493242495694946
+      name: rig.001|Caminar
+      takeName: rig.001|Caminar
+      internalID: -8552286344590539101
       firstFrame: 0
       lastFrame: 24
       wrapMode: 0
@@ -44,10 +44,10 @@ ModelImporter:
       loop: 0
       hasAdditiveReferencePose: 0
       loopTime: 1
-      loopBlend: 0
-      loopBlendOrientation: 0
-      loopBlendPositionY: 0
-      loopBlendPositionXZ: 0
+      loopBlend: 1
+      loopBlendOrientation: 1
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 1
       keepOriginalOrientation: 0
       keepOriginalPositionY: 1
       keepOriginalPositionXZ: 0
@@ -71,8 +71,8 @@ ModelImporter:
     importPhysicalCameras: 1
     importVisibility: 1
     importBlendShapes: 1
-    importCameras: 1
-    importLights: 1
+    importCameras: 0
+    importLights: 0
     nodeNameCollisionStrategy: 1
     fileIdsGeneration: 2
     swapUVChannels: 0
