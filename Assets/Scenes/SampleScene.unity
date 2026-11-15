@@ -3614,15 +3614,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55a94345879c848439bc07beb149cceb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  Velocidad: 2.2
-  Aceleracion: 5
-  Desaceleracion: 8
+  Velocidad: 3
+  Aceleracion: 16
+  Desaceleracion: 30
   FactorRetroceso: 0.7
   FactorLateral: 0.8
   FuerzaEmpuje: 5
   EsprintActivado: 1
-  VelocidadEsprint: 4.2
-  AceleracionEsprint: 7
+  VelocidadEsprint: 5
+  AceleracionEsprint: 20
   Gravedad: -9.81
   FuerzaSalto: 1.5
 --- !u!54 &646855854

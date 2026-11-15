@@ -12,6 +12,8 @@ public static class CaminataValidation
     private static PlayerMovement player;
     private static Camara camara;
     private static Keyboard teclado;
+    private static Mouse raton;
+    private static Vector3 inicioGiro;
     private static Vector3 reposo;
     private static float distanciaBloqueada;
     private static double siguiente;
@@ -100,8 +102,9 @@ public static class CaminataValidation
                 Time.captureDeltaTime = 1f / 60f;
                 player.GetComponent<CharacterController>().minMoveDistance = 0f;
                 limite = EditorApplication.timeSinceStartup + 40;
-                Check(Mathf.Approximately(player.Velocidad, 2.2f), "Escena usa velocidad de terror 2.2 m/s");
+                Check(player.Velocidad > 0f, "Velocidad de caminata configurada");
                 teclado = InputSystem.AddDevice<Keyboard>();
+                raton = InputSystem.AddDevice<Mouse>();
                 InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
                 InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
                 Check(player.GetComponent<Rigidbody>().isKinematic && !player.GetComponent<Rigidbody>().useGravity &&
@@ -128,13 +131,13 @@ public static class CaminataValidation
             }
             else if (stage == 3 && EditorApplication.isPlaying)
             {
-                Check(player.VelocidadHorizontalActual > 0.1f && player.VelocidadHorizontalActual < 1.8f,
-                    "Acelera progresivamente al comenzar");
+                Check(player.VelocidadHorizontalActual > 0.1f && player.VelocidadHorizontalActual <= player.Velocidad + 0.12f,
+                    "Arranque rápido sin exceder la velocidad configurada");
                 Siguiente(4, 0.8);
             }
             else if (stage == 4 && EditorApplication.isPlaying)
             {
-                Check(Mathf.Abs(player.VelocidadHorizontalActual - 2.2f) < 0.12f, "Alcanza velocidad configurada");
+                Check(Mathf.Abs(player.VelocidadHorizontalActual - player.Velocidad) < 0.12f, "Alcanza velocidad configurada");
                 Check(player.DistanciaCaminada > 0.5f, "Pasos avanzan con desplazamiento real");
                 Vector3 offset = camara.transform.localPosition - reposo;
                 Check(Mathf.Abs(offset.x) <= camara.BalanceoHorizontal + 0.001f &&
@@ -153,7 +156,7 @@ public static class CaminataValidation
             }
             else if (stage == 20 && EditorApplication.isPlaying)
             {
-                Check(player.Esprintando && Mathf.Abs(player.VelocidadHorizontalActual - 4.2f) < 0.12f,
+                Check(player.Esprintando && Mathf.Abs(player.VelocidadHorizontalActual - player.VelocidadEsprint) < 0.12f,
                     "Shift izquierdo alcanza velocidad de esprint");
                 Check(camara.MezclaEsprint > 0.8f, "Balanceo acompaña velocidad de carrera");
                 Check(maximoBalanceo < 0.024f && maximoGiro < 0.21f, "Balanceo de carrera permanece moderado");
@@ -162,25 +165,54 @@ public static class CaminataValidation
             }
             else if (stage == 21 && EditorApplication.isPlaying)
             {
-                Check(player.Esprintando && Mathf.Abs(player.VelocidadHorizontalActual - 4.2f) < 0.12f,
+                Check(player.Esprintando && Mathf.Abs(player.VelocidadHorizontalActual - player.VelocidadEsprint) < 0.12f,
                     "Shift derecho también permite esprintar");
                 Entrada(UnityEngine.InputSystem.Key.W);
                 Siguiente(22, 0.15);
             }
             else if (stage == 22 && EditorApplication.isPlaying)
             {
-                Check(!player.Esprintando && player.VelocidadHorizontalActual > 2.2f && player.VelocidadHorizontalActual < 4.1f,
-                    "Soltar Shift frena gradualmente hasta caminar");
+                Check(!player.Esprintando && Mathf.Abs(player.VelocidadHorizontalActual - player.Velocidad) < 0.12f,
+                    "Soltar Shift recupera rápidamente la caminata");
                 Siguiente(23, 0.7);
             }
             else if (stage == 23 && EditorApplication.isPlaying)
             {
-                Check(Mathf.Abs(player.VelocidadHorizontalActual - 2.2f) < 0.12f && camara.MezclaEsprint < 0.1f,
+                Check(Mathf.Abs(player.VelocidadHorizontalActual - player.Velocidad) < 0.12f && camara.MezclaEsprint < 0.1f,
                     "Recupera velocidad y balanceo de caminata");
                 Check(mayorCambioFase < 0.25f && mayorCambioPosicion < 0.006f,
                     "Transiciones de caminar y correr sin saltos de fase ni sacudidas");
+                Entrada(UnityEngine.InputSystem.Key.W, UnityEngine.InputSystem.Key.LeftShift);
+                Siguiente(25, 0.5);
+            }
+            else if (stage == 25 && EditorApplication.isPlaying)
+            {
+                inicioGiro = player.transform.position;
+                InputSystem.QueueDeltaStateEvent(raton.delta, new Vector2(90f / camara.Sensibilidad, 0f));
+                Siguiente(26, 0.1);
+            }
+            else if (stage == 26 && EditorApplication.isPlaying)
+            {
+                Vector3 avance = player.transform.position - inicioGiro;
+                Check(Vector3.Dot(player.transform.forward, Vector3.right) > .99f, "Ratón gira la vista 90 grados");
+                Check(avance.x > .1f && Mathf.Abs(avance.z) < .015f,
+                    "Correr y girar con el ratón cambia la trayectoria en el mismo frame sin derrape");
+                inicioGiro = player.transform.position;
+                Entrada(UnityEngine.InputSystem.Key.S);
+                Siguiente(27, .08);
+            }
+            else if (stage == 27 && EditorApplication.isPlaying)
+            {
+                Vector3 avance = player.transform.position - inicioGiro;
+                Check(Vector3.Dot(avance, player.transform.forward) < -.02f, "Invertir dirección responde de inmediato");
                 Entrada(UnityEngine.InputSystem.Key.LeftShift);
-                Siguiente(24, 0.8);
+                Siguiente(28, .05);
+            }
+            else if (stage == 28 && EditorApplication.isPlaying)
+            {
+                Check(player.VelocidadHorizontalActual < .02f, "Soltar movimiento frena inmediatamente incluso con Shift");
+                player.transform.rotation = Quaternion.identity;
+                Siguiente(24, .8);
             }
             else if (stage == 24 && EditorApplication.isPlaying)
             {
@@ -199,7 +231,7 @@ public static class CaminataValidation
             }
             else if (stage == 6 && EditorApplication.isPlaying)
             {
-                Check(Mathf.Abs(player.VelocidadHorizontalActual - 1.54f) < 0.12f, "Retroceso más lento");
+                Check(Mathf.Abs(player.VelocidadHorizontalActual - player.Velocidad * player.FactorRetroceso) < 0.12f, "Retroceso más lento");
                 Check(!player.Esprintando, "Retroceder con Shift conserva caminata");
                 Entrada();
                 Siguiente(7, 0.5);
@@ -239,6 +271,7 @@ public static class CaminataValidation
                 Check(puerta.angularVelocity.sqrMagnitude > 0.0001f, "Caminata lenta conserva el empuje físico de puertas");
                 Entrada();
                 InputSystem.RemoveDevice(teclado);
+                InputSystem.RemoveDevice(raton);
                 Time.captureDeltaTime = 0f;
                 Debug.Log("CAMINATA_VALIDATION_OK");
                 SessionState.SetInt(Key, 11);

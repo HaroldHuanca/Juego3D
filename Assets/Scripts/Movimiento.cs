@@ -2,20 +2,22 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+// La mirada se actualiza en 100; mover después evita usar la orientación del frame anterior.
+[DefaultExecutionOrder(110)]
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movimiento")]
     public float Velocidad = 2.2f;
-    [Min(0.1f)] public float Aceleracion = 5f;
-    [Min(0.1f)] public float Desaceleracion = 8f;
+    [Min(0.1f)] public float Aceleracion = 16f;
+    [Min(0.1f)] public float Desaceleracion = 30f;
     [Range(0.1f, 1f)] public float FactorRetroceso = 0.7f;
     [Range(0.1f, 1f)] public float FactorLateral = 0.8f;
     [Min(0f)] public float FuerzaEmpuje = 5f;
     [Header("Esprint (mantener Shift al avanzar)")]
     public bool EsprintActivado = true;
     [Min(0.1f)] public float VelocidadEsprint = 4.2f;
-    [Min(0.1f)] public float AceleracionEsprint = 7f;
+    [Min(0.1f)] public float AceleracionEsprint = 20f;
     public float Gravedad = -9.81f;
     public float FuerzaSalto = 1.5f;
 
@@ -87,11 +89,16 @@ public class PlayerMovement : MonoBehaviour
             (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
         Esprintando = EsprintActivado && shift && vertical > 0f;
         float rapidez = Esprintando ? Mathf.Max(Velocidad, VelocidadEsprint) : Velocidad;
-        Vector3 objetivo = movimiento * rapidez * factor;
-        bool frenando = objetivo.sqrMagnitude < velocidadHorizontal.sqrMagnitude;
-        float cambio = movimiento.sqrMagnitude == 0f || frenando ? Desaceleracion :
+        // Suavizar solamente la rapidez: la dirección siempre sigue la mirada y las teclas.
+        // Interpolar un vector mundial conserva impulso lateral al girar la cámara.
+        float rapidezObjetivo = rapidez * factor * movimiento.magnitude;
+        float rapidezActual = velocidadHorizontal.magnitude;
+        float cambio = rapidezObjetivo < rapidezActual ? Desaceleracion :
             Esprintando ? AceleracionEsprint : Aceleracion;
-        velocidadHorizontal = Vector3.MoveTowards(velocidadHorizontal, objetivo, cambio * Time.deltaTime);
+        float nuevaRapidez = Mathf.MoveTowards(rapidezActual, rapidezObjetivo, cambio * Time.deltaTime);
+        velocidadHorizontal = movimiento.sqrMagnitude > 0f
+            ? movimiento.normalized * nuevaRapidez
+            : Vector3.zero;
 
         // Salto
         if (Keyboard.current != null &&
