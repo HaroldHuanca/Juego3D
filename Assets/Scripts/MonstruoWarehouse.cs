@@ -13,6 +13,11 @@ public class MonstruoWarehouse : MonoBehaviour
     public float radioAbandono = 19f;
     public float velocidadCaminar = 1.5f;
     public float velocidadPersecucion = 2.3f;
+    [Header("Animación de caminata")]
+    [Tooltip("Ritmo del ciclo a la velocidad de referencia. Menor valor = pasos más lentos.")]
+    [Min(0.01f)] public float ritmoAnimacion = 0.65f;
+    [Tooltip("Velocidad de desplazamiento en m/s que corresponde al ritmo indicado.")]
+    [Min(0.01f)] public float velocidadReferenciaAnimacion = 1.5f;
     public enum Estado { Patrullando, Persiguiendo, Regresando }
     [SerializeField] private Estado estado;
     public Estado EstadoActual => estado;
@@ -41,7 +46,11 @@ public class MonstruoWarehouse : MonoBehaviour
             var movimiento = FindAnyObjectByType<PlayerMovement>();
             if (movimiento != null) jugador = movimiento.transform;
         }
-        if (animador != null) animador.applyRootMotion = false;
+        if (animador != null)
+        {
+            animador.applyRootMotion = false;
+            animador.speed = 0f;
+        }
     }
 
     public bool Dentro(Vector3 punto, float margen = 0f)
@@ -103,8 +112,15 @@ public class MonstruoWarehouse : MonoBehaviour
                 }
             }
         }
-        // Solo caminar; al detenerse se congela el ciclo sin introducir otros clips.
-        if (animador != null) animador.speed = Mathf.Clamp(agente.velocity.magnitude / velocidadCaminar, 0f, 1.55f);
+        // Ajustar los pasos a la velocidad horizontal real, también al acelerar y frenar.
+        // La referencia es independiente de la velocidad elegida para la patrulla.
+        if (animador != null)
+        {
+            Vector3 velocidad = agente.velocity;
+            velocidad.y = 0f;
+            animador.speed = velocidad.magnitude / Mathf.Max(0.01f, velocidadReferenciaAnimacion)
+                * Mathf.Max(0.01f, ritmoAnimacion);
+        }
     }
 
     private void OnDestroy() { if (instancia.valid) instancia.Remove(); }
