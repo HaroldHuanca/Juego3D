@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
 using UnityEngine.UI;
-using UnityEditor.Animations;
 
 public class JugadorRecolector : MonoBehaviour
 {
@@ -415,8 +414,8 @@ public class JugadorRecolector : MonoBehaviour
             return;
         }
 
-        AnimatorController controller =
-            animador.runtimeAnimatorController as AnimatorController;
+        RuntimeAnimatorController controller =
+            animador.runtimeAnimatorController;
 
         if (controller == null)
         {
@@ -426,18 +425,12 @@ public class JugadorRecolector : MonoBehaviour
 
         Debug.Log("========== ESTADOS DEL ANIMATOR ==========");
 
-        foreach (var capa in controller.layers)
+        foreach (AnimationClip clip in controller.animationClips)
         {
-            Debug.Log($"CAPA: {capa.name}");
-
-            foreach (var estado in capa.stateMachine.states)
-            {
-                string ruta = capa.name + "." + estado.state.name;
-
-                Debug.Log(
-                    $"Estado: {ruta} | Hash: {Animator.StringToHash(ruta)}"
-                );
-            }
+            Debug.Log(
+                $"Animación: {clip.name} | " +
+                $"Duración: {clip.length}"
+            );
         }
 
         Debug.Log("==========================================");
