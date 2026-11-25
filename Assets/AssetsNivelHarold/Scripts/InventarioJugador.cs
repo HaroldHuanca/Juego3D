@@ -18,9 +18,11 @@ public class InventarioJugador : MonoBehaviour
 {
     [Header("Objetos almacenados")]
     [SerializeField]
-    private List<EntradaInventario> objetos = new List<EntradaInventario>();
+    private List<EntradaInventario> objetos = new();
 
     public IReadOnlyList<EntradaInventario> Objetos => objetos;
+
+    public event Action InventarioCambiado;
 
     public bool AgregarObjeto(ObjetoInteractuable objeto)
     {
@@ -29,11 +31,10 @@ public class InventarioJugador : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(objeto.IdObjeto))
         {
-            Debug.LogWarning("El objeto no tiene un ID asignado.");
+            Debug.LogWarning("El objeto no tiene ID.");
             return false;
         }
 
-        // Si es acumulable, buscar una entrada existente.
         if (objeto.Acumulable)
         {
             EntradaInventario existente = objetos.Find(
@@ -43,11 +44,12 @@ public class InventarioJugador : MonoBehaviour
             if (existente != null)
             {
                 existente.cantidad += objeto.Cantidad;
+
+                InventarioCambiado?.Invoke();
                 return true;
             }
         }
 
-        // Crear una nueva entrada.
         EntradaInventario nuevaEntrada = new EntradaInventario
         {
             idObjeto = objeto.IdObjeto,
@@ -60,17 +62,17 @@ public class InventarioJugador : MonoBehaviour
 
         objetos.Add(nuevaEntrada);
 
+        InventarioCambiado?.Invoke();
+
         return true;
     }
 
     public void MostrarInventario()
     {
-        Debug.Log("===== INVENTARIO =====");
-
         foreach (EntradaInventario objeto in objetos)
         {
             Debug.Log(
-                objeto.nombre + " | Cantidad: " + objeto.cantidad
+                $"{objeto.nombre} | Cantidad: {objeto.cantidad}"
             );
         }
     }
