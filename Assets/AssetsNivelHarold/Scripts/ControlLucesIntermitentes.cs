@@ -8,7 +8,7 @@ public class ControlLucesIntermitentes : MonoBehaviour
 
     [Header("Tiempo encendida (segundos)")]
     [Min(0.05f)]
-    public float minimoEncendida = 0.5f;
+    public float minimoEncendida = 0.2f;
 
     [Min(0.05f)]
     public float maximoEncendida = 4f;
@@ -18,7 +18,7 @@ public class ControlLucesIntermitentes : MonoBehaviour
     public float minimoApagada = 0.1f;
 
     [Min(0.05f)]
-    public float maximoApagada = 1.5f;
+    public float maximoApagada = 1f;
 
     private float[] temporizadores;
     private bool[] estados;

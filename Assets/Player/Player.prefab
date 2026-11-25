@@ -47,7 +47,6 @@ GameObject:
   - component: {fileID: 5908302709292833752}
   - component: {fileID: 1787263656381613980}
   - component: {fileID: 6583405993585187382}
-  - component: {fileID: 2196743578650524049}
   m_Layer: 9
   m_Name: Player
   m_TagString: Untagged
@@ -257,29 +256,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!114 &2196743578650524049
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3341539871877906519}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 40d512eaeb0b6a663a4689f0b7712ea8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::JugadorRecolector
-  camara: {fileID: 4944923209658895201}
-  distanciaInteraccion: 2.5
-  capasDetectables:
-    serializedVersion: 2
-    m_Bits: 511
-  puntoSujecion: {fileID: 4954861275885738282}
-  mostrarIndicador: 1
-  duracionLlenado: 5
-  barraLlenado: {fileID: 0}
-  nombreEstadoAnimacion: Base Layer.Scene
-  velocidadAnimacion: 2
 --- !u!1 &4027606054083836366
 GameObject:
   m_ObjectHideFlags: 0
