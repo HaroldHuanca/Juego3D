@@ -2,7 +2,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
 using UnityEngine.UI;
+#if UNITY_EDITOR
 using UnityEditor.Animations;
+#endif
 
 public class JugadorRecolector : MonoBehaviour
 {
@@ -30,6 +32,9 @@ public class JugadorRecolector : MonoBehaviour
     private CajaInteractuable cajaSostenida;
     private GUIStyle estiloGUI;
     private ObjetoAleatorio objetoDetectado;
+    private string mensajeBloqueoCaja = "";
+
+    public bool EstaSosteniendoCaja => cajaSostenida != null;
 
     private void Start()
     {
@@ -59,7 +64,7 @@ public class JugadorRecolector : MonoBehaviour
                         SoltarCaja();
                     }
 
-                    if (Keyboard.current.eKey.wasPressedThisFrame &&
+                    if (Keyboard.current.eKey.isPressed &&
                         objetoDetectado != null)
                     {
                         StartCoroutine(LlenarObjeto(objetoDetectado));
@@ -113,12 +118,21 @@ public class JugadorRecolector : MonoBehaviour
             }
 
             cajaDetectada = nuevaCaja;
+            mensajeBloqueoCaja = "";
 
-            // Encender brillo en la nueva caja que estamos mirando
             if (cajaDetectada != null)
             {
-                cajaDetectada.SetResaltado(true);
+                bool permitida = Mundo1.SistemaPaquetesMundo1.Instance == null ||
+                                 Mundo1.SistemaPaquetesMundo1.Instance.PuedeRecogerCaja(cajaDetectada.gameObject, out mensajeBloqueoCaja);
+                if (permitida)
+                {
+                    cajaDetectada.SetResaltado(true);
+                }
             }
+        }
+        else if (cajaDetectada != null && Mundo1.SistemaPaquetesMundo1.Instance != null)
+        {
+            Mundo1.SistemaPaquetesMundo1.Instance.PuedeRecogerCaja(cajaDetectada.gameObject, out mensajeBloqueoCaja);
         }
     }
 
@@ -127,13 +141,31 @@ public class JugadorRecolector : MonoBehaviour
         if (cajaDetectada == null || puntoSujecion == null)
             return;
 
+        if (Mundo1.SistemaPaquetesMundo1.Instance != null &&
+            !Mundo1.SistemaPaquetesMundo1.Instance.PuedeRecogerCaja(cajaDetectada.gameObject, out mensajeBloqueoCaja))
+        {
+            return;
+        }
+
         // Apagar el brillo de interacción antes de cargarla
         cajaDetectada.SetResaltado(false);
 
         cajaSostenida = cajaDetectada;
         Animator animador = cajaSostenida.GetComponentInChildren<Animator>();
 
+#if UNITY_EDITOR
         MostrarEstadosAnimator(animador);
+#endif
+        if (animador != null)
+        {
+            int estadoHash = Animator.StringToHash(nombreEstadoAnimacion);
+            if (animador.HasState(0, estadoHash))
+            {
+                animador.speed = 0f;
+                animador.Play(estadoHash, 0, 1f); // Mantener la caja cerrada al recogerla
+                animador.Update(0f);
+            }
+        }
         cajaDetectada = null;
 
         Rigidbody rb = cajaSostenida.GetComponent<Rigidbody>();
@@ -183,6 +215,8 @@ public class JugadorRecolector : MonoBehaviour
         {
             col.enabled = false;
         }
+
+        Mundo1.SistemaPaquetesMundo1.Instance?.NotificarCajaRecogida(cajaSostenida.gameObject);
     }
 
     private void SoltarCaja()
@@ -208,6 +242,50 @@ public class JugadorRecolector : MonoBehaviour
         }
 
         cajaSostenida = null;
+        Mundo1.SistemaPaquetesMundo1.Instance?.NotificarCajaSoltada();
+    }
+
+    /// <summary>
+    /// Si el jugador sostiene una caja cuando es atrapado por el monstruo, la devuelve a su punto inicial en el almacén.
+    /// </summary>
+    public void DevolverCajaSostenidaAOrigen()
+    {
+        StopAllCoroutines();
+        estaLlenando = false;
+        objetoDetectado = null;
+
+        if (barraLlenado != null)
+        {
+            barraLlenado.value = 0f;
+            barraLlenado.gameObject.SetActive(false);
+        }
+
+        if (cajaSostenida == null) return;
+
+        var caja = cajaSostenida;
+        cajaSostenida = null;
+
+        var paquete = caja.GetComponent<Mundo1.PaqueteMundo1>();
+        if (paquete != null)
+        {
+            paquete.RestaurarEnOrigen();
+        }
+        else
+        {
+            caja.transform.SetParent(null);
+            foreach (Collider col in caja.GetComponentsInChildren<Collider>(true))
+            {
+                col.enabled = true;
+            }
+            var rb = caja.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = false;
+                rb.useGravity = true;
+            }
+        }
+
+        Mundo1.SistemaPaquetesMundo1.Instance?.NotificarCajaSoltada();
     }
 
     private void OnDisable()
@@ -242,7 +320,9 @@ public class JugadorRecolector : MonoBehaviour
         }
         else if (cajaDetectada != null)
         {
-            textoPrompt = "Click Derecho · Recoger Caja";
+            textoPrompt = !string.IsNullOrEmpty(mensajeBloqueoCaja)
+                ? mensajeBloqueoCaja
+                : "Click Derecho · Recoger Caja";
         }
 
         if (!string.IsNullOrEmpty(textoPrompt))
@@ -330,69 +410,85 @@ public class JugadorRecolector : MonoBehaviour
         }
 
         float tiempoTranscurrido = 0f;
+        float duracionTransicionCaja = Mathf.Clamp(1f / Mathf.Max(0.1f, velocidadAnimacion), 0.15f, 0.8f);
+        float tiempoNormalizadoActual = 1f;
 
-        // Comenzar con la caja cerrada.
+        // Comenzar con la caja cerrada (1f) y abrirla una sola vez hacia abierta (0f).
         if (animador != null)
         {
+            animador.speed = 0f;
             animador.Play(estadoHash, 0, 1f);
             animador.Update(0f);
         }
 
+        bool completado = false;
         while (tiempoTranscurrido < duracionLlenado)
         {
-            if (objetivo == null || cajaSostenida == null)
+            bool mantieneE = Keyboard.current != null && Keyboard.current.eKey.isPressed;
+            if (!mantieneE || objetivo == null || cajaSostenida == null)
+            {
                 break;
+            }
+
+            DetectarObjetoAleatorio();
+            if (objetoDetectado != objetivo)
+            {
+                break;
+            }
 
             tiempoTranscurrido += Time.deltaTime;
 
-            // Calcular progreso.
-            float progreso = Mathf.Clamp01(
-                tiempoTranscurrido / duracionLlenado
-            );
-
-            // Actualizar barra.
+            float progreso = Mathf.Clamp01(tiempoTranscurrido / duracionLlenado);
             if (barraLlenado != null)
             {
                 barraLlenado.value = progreso;
             }
 
-            // Alternar apertura y cierre.
+            // Abrir suavemente de 1 (cerrada) a 0 (abierta) y mantenerse abierta mientras llena.
             if (animador != null)
             {
-                float tiempoAnimacion =
-                    tiempoTranscurrido * velocidadAnimacion;
-
-                float posicion = Mathf.PingPong(
-                    tiempoAnimacion, 1f
-                );
-
-                // La animación original va de abierta (0)
-                // a cerrada (1).
-                float tiempoNormalizado = 1f - posicion;
-
-                animador.Play(
-                    estadoHash,
-                    0,
-                    tiempoNormalizado
-                );
-
+                float progresoApertura = Mathf.Clamp01(tiempoTranscurrido / duracionTransicionCaja);
+                tiempoNormalizadoActual = Mathf.Lerp(1f, 0f, progresoApertura);
+                animador.Play(estadoHash, 0, tiempoNormalizadoActual);
                 animador.Update(0f);
+            }
+
+            if (tiempoTranscurrido >= duracionLlenado)
+            {
+                completado = true;
+                break;
             }
 
             yield return null;
         }
 
-        // Si el objeto sigue existiendo, hacerlo visible.
-        if (objetivo != null && cajaSostenida != null)
+        // Si completó el llenado, mostrar el producto en el anaquel y consumir la caja usada.
+        if (completado && objetivo != null && cajaSostenida != null)
         {
             objetivo.MostrarObjeto();
-
             Debug.Log("[Jugador] ¡Llenado completado!");
+
+            GameObject cajaConsumida = cajaSostenida.gameObject;
+            cajaSostenida.transform.SetParent(null);
+            cajaSostenida = null;
+            cajaConsumida.SetActive(false);
+
+            Mundo1.SistemaPaquetesMundo1.Instance?.NotificarPaqueteEntregado(cajaConsumida);
         }
 
-        // Dejar la caja completamente cerrada.
-        if (animador != null)
+        // Al soltar [E] o terminar el llenado, cerrar la caja suavemente hasta 1 (cerrada).
+        if (animador != null && tiempoNormalizadoActual < 0.99f)
         {
+            float tiempoCierre = 0f;
+            float duracionCierre = Mathf.Min(duracionTransicionCaja, 0.35f) * Mathf.Clamp01(1f - tiempoNormalizadoActual);
+            while (tiempoCierre < duracionCierre)
+            {
+                tiempoCierre += Time.deltaTime;
+                float t = duracionCierre > 0.001f ? Mathf.Clamp01(tiempoCierre / duracionCierre) : 1f;
+                animador.Play(estadoHash, 0, Mathf.Lerp(tiempoNormalizadoActual, 1f, t));
+                animador.Update(0f);
+                yield return null;
+            }
             animador.Play(estadoHash, 0, 1f);
             animador.Update(0f);
         }
@@ -407,6 +503,7 @@ public class JugadorRecolector : MonoBehaviour
         objetoDetectado = null;
         estaLlenando = false;
     }
+#if UNITY_EDITOR
     private void MostrarEstadosAnimator(Animator animador)
     {
         if (animador == null)
@@ -442,4 +539,5 @@ public class JugadorRecolector : MonoBehaviour
 
         Debug.Log("==========================================");
     }
+#endif
 }

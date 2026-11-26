@@ -33,7 +33,11 @@ namespace Tienda.SistemaVentas
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AutoInicializar()
         {
-            if (Instance == null && FindObjectOfType<HUDTienda>() == null)
+            // No auto-crear en el menú ni en Mundo 1 (usa HUDTareasMundo1)
+            if (FindAnyObjectByType<MenuInicio>() != null || FindAnyObjectByType<Mundo1.DirectorTurno>() != null)
+                return;
+
+            if (Instance == null && FindAnyObjectByType<HUDTienda>() == null)
             {
                 GameObject hudObj = new GameObject("HUD_Tienda_Auto", typeof(HUDTienda));
                 if (Application.isPlaying) DontDestroyOnLoad(hudObj);

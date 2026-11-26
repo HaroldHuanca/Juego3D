@@ -33,7 +33,7 @@ namespace Tienda.Clientes
         private void BuscarCamara()
         {
             if (Camera.main != null) camaraPrincipal = Camera.main;
-            else camaraPrincipal = FindObjectOfType<Camera>();
+            else camaraPrincipal = FindAnyObjectByType<Camera>();
         }
 
         private void LateUpdate()
@@ -48,9 +48,6 @@ namespace Tienda.Clientes
 
             // Billboard: Hacer que siempre mire exactamente de frente a la cámara del jugador
             canvasObj.transform.forward = camaraPrincipal.transform.forward;
-
-            // Mantener la posición siempre fija sobre la cabeza del personaje
-            canvasObj.transform.position = transform.position + (Vector3.up * alturaSobreCabeza);
         }
 
         private void ConstruirUIFlotante()

@@ -13,6 +13,7 @@ public class InteraccionJugador : MonoBehaviour
     public bool mostrarIndicador = true;
     private ObjetoRecogible objeto;
     private Rigidbody puerta;
+    private Mundo1.PuertaSeguroMundo1 puertaBloqueada;
     private RaycastHit contacto;
     private Coroutine recogidaPendiente;
     private GUIStyle estilo;
@@ -28,11 +29,18 @@ public class InteraccionJugador : MonoBehaviour
     {
         objeto = null;
         puerta = null;
+        puertaBloqueada = null;
         // El primer impacto bloquea la interacción: no permite recoger a través de paredes.
         if (!Physics.Raycast(transform.position, transform.forward, out contacto,
             distancia, capasInteractuables, QueryTriggerInteraction.Ignore)) return;
         if (jugador != null && contacto.transform.IsChildOf(jugador)) return;
         objeto = contacto.collider.GetComponentInParent<ObjetoRecogible>();
+        var seguro = contacto.collider.GetComponentInParent<Mundo1.PuertaSeguroMundo1>();
+        if (seguro != null && seguro.EstaBloqueada)
+        {
+            puertaBloqueada = seguro;
+            return;
+        }
         Rigidbody body = contacto.rigidbody;
         if (body != null && !body.isKinematic && body.GetComponent<HingeJoint>() != null) puerta = body;
     }
@@ -40,6 +48,11 @@ public class InteraccionJugador : MonoBehaviour
     public bool IntentarInteractuar()
     {
         BuscarObjetivo();
+        if (puertaBloqueada != null)
+        {
+            puertaBloqueada.NotificarIntentoSalida();
+            return false;
+        }
         if (brazos == null || brazos.Ocupado || recogidaPendiente != null) return false;
         if (objeto != null && objeto.isActiveAndEnabled && !objeto.Recogido)
         {
@@ -67,6 +80,7 @@ public class InteraccionJugador : MonoBehaviour
         recogidaPendiente = null;
         objeto = null;
         puerta = null;
+        puertaBloqueada = null;
     }
 
     private void OnGUI()
@@ -76,7 +90,14 @@ public class InteraccionJugador : MonoBehaviour
         { alignment = TextAnchor.MiddleCenter, fontSize = 16 };
         GUI.Label(new Rect(Screen.width / 2f - 8, Screen.height / 2f - 8, 16, 16), "·", estilo);
         if (brazos == null || brazos.Ocupado) return;
-        string texto = objeto != null ? "E · Recoger " + objeto.nombreObjeto : puerta != null ? "E · Empujar" : "";
-        GUI.Label(new Rect(Screen.width / 2f - 180, Screen.height / 2f + 25, 360, 30), texto, estilo);
+        string texto = objeto != null
+            ? "E · Recoger " + objeto.nombreObjeto
+            : puertaBloqueada != null
+                ? puertaBloqueada.TextoIndicador
+                : puerta != null ? "E · Empujar" : "";
+        if (!string.IsNullOrEmpty(texto))
+        {
+            GUI.Label(new Rect(Screen.width / 2f - 220, Screen.height / 2f + 25, 440, 30), texto, estilo);
+        }
     }
 }
