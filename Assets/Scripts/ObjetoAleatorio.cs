@@ -5,14 +5,22 @@ using System.Collections;
 public class ObjetoAleatorio : MonoBehaviour
 {
     [Header("Configuración")]
+    [Tooltip("Si está desactivado, solo se vacía cuando el DirectorTurno lo indica al iniciar la fase de reposición.")]
+    [SerializeField] private bool desaparicionAleatoriaActiva = false;
     [SerializeField] private float intervalo = 20f;
     [SerializeField] private float probabilidad = 0.5f;
 
     private Renderer objetoRenderer;
     public bool EstaVisible => objetoRenderer != null && objetoRenderer.enabled;
-    void Start()
+
+    void Awake()
     {
         objetoRenderer = GetComponent<Renderer>();
+    }
+
+    void Start()
+    {
+        if (objetoRenderer == null) objetoRenderer = GetComponent<Renderer>();
 
         if (objetoRenderer == null)
         {
@@ -20,7 +28,10 @@ public class ObjetoAleatorio : MonoBehaviour
             return;
         }
 
-        StartCoroutine(ControlarVisibilidad());
+        if (desaparicionAleatoriaActiva)
+        {
+            StartCoroutine(ControlarVisibilidad());
+        }
     }
 
     IEnumerator ControlarVisibilidad()
@@ -41,6 +52,12 @@ public class ObjetoAleatorio : MonoBehaviour
             }
         }
     }
+    public void VaciarObjeto()
+    {
+        if (objetoRenderer == null) objetoRenderer = GetComponent<Renderer>();
+        if (objetoRenderer != null) objetoRenderer.enabled = false;
+    }
+
     public void MostrarObjeto()
 {
     if (objetoRenderer == null)
