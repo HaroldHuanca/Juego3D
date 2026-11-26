@@ -1,4 +1,5 @@
 
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -12,7 +13,12 @@ public class JugadorRecolectorHarold : MonoBehaviour
     [Header("Inventario")]
     [SerializeField] private InventarioJugador inventario;
 
+    [Header("Notificaciones")]
+    [SerializeField] private UIControladorNotificaciones notificaciones;
+
     private ObjetoInteractuable objetoDetectado;
+
+    public event Action<ObjetoInteractuable> ObjetoDetectadoCambiado;
 
     void Awake()
     {
@@ -37,7 +43,7 @@ public class JugadorRecolectorHarold : MonoBehaviour
 
     void DetectarObjeto()
     {
-        objetoDetectado = null;
+        ObjetoInteractuable nuevoObjeto = null;
 
         if (camara == null)
             return;
@@ -54,36 +60,56 @@ public class JugadorRecolectorHarold : MonoBehaviour
             capasDetectables,
             QueryTriggerInteraction.Ignore))
         {
-            objetoDetectado =
+            nuevoObjeto =
                 impacto.collider.GetComponentInParent<ObjetoInteractuable>();
 
-            if (objetoDetectado != null &&
-                !objetoDetectado.Recolectable)
+            if (nuevoObjeto != null &&
+                !nuevoObjeto.Recolectable)
             {
-                objetoDetectado = null;
+                nuevoObjeto = null;
             }
+        }
+
+        if (nuevoObjeto != objetoDetectado)
+        {
+            objetoDetectado = nuevoObjeto;
+
+            ObjetoDetectadoCambiado?.Invoke(objetoDetectado);
         }
     }
 
     void IntentarRecoger()
     {
-        if (inventario == null)
-        {
-            Debug.LogError("No se encontró el InventarioJugador.");
+        if (inventario == null || objetoDetectado == null)
             return;
-        }
 
-        if (inventario.AgregarObjeto(objetoDetectado))
+        ObjetoInteractuable objeto = objetoDetectado;
+
+        string nombre = objeto.NombreObjeto;
+        Sprite icono = objeto.Icono;
+
+        if (inventario.AgregarObjeto(objeto))
         {
-            Debug.Log(
-                "Recolectaste: " + objetoDetectado.NombreObjeto
-            );
-
-            objetoDetectado.Recoger();
-
-            inventario.MostrarInventario();
+            objeto.Recoger();
 
             objetoDetectado = null;
+            ObjetoDetectadoCambiado?.Invoke(null);
+
+            if (notificaciones != null)
+            {
+                notificaciones.Mostrar(
+                    "Has encontrado: " + nombre,
+                    icono
+                );
+            }
+
+            inventario.MostrarInventario();
         }
+    }
+
+    void OnDisable()
+    {
+        objetoDetectado = null;
+        ObjetoDetectadoCambiado?.Invoke(null);
     }
 }

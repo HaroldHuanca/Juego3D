@@ -6,6 +6,9 @@ using UnityEngine;
 [Serializable]
 public class EntradaInventario
 {
+    public DefinicionObjeto definicion;
+
+    // Datos utilizados por la UI actual.
     public string idObjeto;
     public string nombre;
     public string descripcion;
@@ -18,7 +21,8 @@ public class InventarioJugador : MonoBehaviour
 {
     [Header("Objetos almacenados")]
     [SerializeField]
-    private List<EntradaInventario> objetos = new();
+    private List<EntradaInventario> objetos =
+        new List<EntradaInventario>();
 
     public IReadOnlyList<EntradaInventario> Objetos => objetos;
 
@@ -29,22 +33,24 @@ public class InventarioJugador : MonoBehaviour
         if (objeto == null || !objeto.Recolectable)
             return false;
 
-        if (string.IsNullOrWhiteSpace(objeto.IdObjeto))
+        DefinicionObjeto definicion = objeto.Definicion;
+
+        if (definicion == null ||
+            string.IsNullOrWhiteSpace(definicion.IdObjeto))
         {
-            Debug.LogWarning("El objeto no tiene ID.");
+            Debug.LogWarning("El objeto no tiene una definición válida.");
             return false;
         }
 
-        if (objeto.Acumulable)
+        if (definicion.Acumulable)
         {
             EntradaInventario existente = objetos.Find(
-                x => x.idObjeto == objeto.IdObjeto
+                x => x.idObjeto == definicion.IdObjeto
             );
 
             if (existente != null)
             {
                 existente.cantidad += objeto.Cantidad;
-
                 InventarioCambiado?.Invoke();
                 return true;
             }
@@ -52,12 +58,13 @@ public class InventarioJugador : MonoBehaviour
 
         EntradaInventario nuevaEntrada = new EntradaInventario
         {
-            idObjeto = objeto.IdObjeto,
-            nombre = objeto.NombreObjeto,
-            descripcion = objeto.Descripcion,
-            icono = objeto.Icono,
+            definicion = definicion,
+            idObjeto = definicion.IdObjeto,
+            nombre = definicion.NombreObjeto,
+            descripcion = definicion.Descripcion,
+            icono = definicion.Icono,
             cantidad = objeto.Cantidad,
-            acumulable = objeto.Acumulable
+            acumulable = definicion.Acumulable
         };
 
         objetos.Add(nuevaEntrada);
@@ -67,8 +74,47 @@ public class InventarioJugador : MonoBehaviour
         return true;
     }
 
+    public EntradaInventario ObtenerObjetoEnIndice(int indice)
+    {
+        if (indice < 0 || indice >= objetos.Count)
+            return null;
+
+        return objetos[indice];
+    }
+
+    public bool Contiene(EntradaInventario entrada)
+    {
+        return entrada != null && objetos.Contains(entrada);
+    }
+
+    public bool QuitarCantidad(
+        EntradaInventario entrada,
+        int cantidad)
+    {
+        if (entrada == null ||
+            cantidad <= 0 ||
+            !objetos.Contains(entrada))
+        {
+            return false;
+        }
+
+        if (entrada.cantidad < cantidad)
+            return false;
+
+        entrada.cantidad -= cantidad;
+
+        if (entrada.cantidad <= 0)
+            objetos.Remove(entrada);
+
+        InventarioCambiado?.Invoke();
+
+        return true;
+    }
+
     public void MostrarInventario()
     {
+        Debug.Log("===== INVENTARIO =====");
+
         foreach (EntradaInventario objeto in objetos)
         {
             Debug.Log(

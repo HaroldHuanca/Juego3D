@@ -3,30 +3,35 @@ using UnityEngine;
 
 public class ObjetoInteractuable : MonoBehaviour
 {
-    [Header("Identificación")]
-    [SerializeField] private string idObjeto;
-    [SerializeField] private string nombreObjeto;
-    [TextArea(2, 4)]
-    [SerializeField] private string descripcion;
+    [Header("Definición del objeto")]
+    [SerializeField] private DefinicionObjeto definicion;
 
-    [Header("Presentación")]
-    [SerializeField] private Sprite icono;
-
-    [Header("Inventario")]
+    [Header("Cantidad al recoger")]
     [Min(1)]
     [SerializeField] private int cantidad = 1;
-
-    [SerializeField] private bool acumulable = false;
 
     [Header("Estado")]
     [SerializeField] private bool recolectable = true;
 
-    public string IdObjeto => idObjeto;
-    public string NombreObjeto => nombreObjeto;
-    public string Descripcion => descripcion;
-    public Sprite Icono => icono;
+    public DefinicionObjeto Definicion => definicion;
+
+    public string IdObjeto =>
+        definicion != null ? definicion.IdObjeto : "";
+
+    public string NombreObjeto =>
+        definicion != null ? definicion.NombreObjeto : name;
+
+    public string Descripcion =>
+        definicion != null ? definicion.Descripcion : "";
+
+    public Sprite Icono =>
+        definicion != null ? definicion.Icono : null;
+
     public int Cantidad => cantidad;
-    public bool Acumulable => acumulable;
+
+    public bool Acumulable =>
+        definicion != null && definicion.Acumulable;
+
     public bool Recolectable => recolectable;
 
     public void Recoger()
@@ -36,5 +41,10 @@ public class ObjetoInteractuable : MonoBehaviour
 
         recolectable = false;
         Destroy(gameObject);
+    }
+
+    void OnValidate()
+    {
+        cantidad = Mathf.Max(1, cantidad);
     }
 }
